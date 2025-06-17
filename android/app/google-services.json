@@ -1,72 +1,44 @@
 {
   "project_info": {
-    "project_number": "1000385690141",
-    "project_id": "maps-proos",
-    "storage_bucket": "maps-proos.firebasestorage.app"
+    "project_number": "570409833237",
+    "project_id": "mapss-pro",
+    "storage_bucket": "mapss-pro.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1000385690141:android:f8dc60bc4bf44ff69464f4",
+        "mobilesdk_app_id": "1:570409833237:android:3d8f8b3276de06c56bcf1c",
         "android_client_info": {
           "package_name": "com.example.new_commute"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "570409833237-snosgsboqerk32uishaocjhlj0j2gs23.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.new_commute",
+            "certificate_hash": "8341b363417d4db07e2e72e2e78350f2d1bad572"
+          }
+        },
+        {
+          "client_id": "570409833237-jp1kd2qumhglf1l9ufnk8r77emi0pnod.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyApM2rlfYekYiIc8yjlLAu8aFnF1aPejzI"
-        },{
-          "project_info": {
-            "project_number": "570409833237",
-            "project_id": "mapss-pro",
-            "storage_bucket": "mapss-pro.firebasestorage.app"
-          },
-          "client": [
-            {
-              "client_info": {
-                "mobilesdk_app_id": "1:570409833237:android:3d8f8b3276de06c56bcf1c",
-                "android_client_info": {
-                  "package_name": "com.example.new_commute"
-                }
-              },
-              "oauth_client": [
-                {
-                  "client_id": "570409833237-snosgsboqerk32uishaocjhlj0j2gs23.apps.googleusercontent.com",
-                  "client_type": 1,
-                  "android_info": {
-                    "package_name": "com.example.new_commute",
-                    "certificate_hash": "8341b363417d4db07e2e72e2e78350f2d1bad572"
-                  }
-                },
-                {
-                  "client_id": "570409833237-jp1kd2qumhglf1l9ufnk8r77emi0pnod.apps.googleusercontent.com",
-                  "client_type": 3
-                }
-              ],
-              "api_key": [
-                {
-                  "current_key": "AIzaSyAytdM6_662UQwbFRcT2tp0itHSnYHJg9A"
-                }
-              ],
-              "services": {
-                "appinvite_service": {
-                  "other_platform_oauth_client": [
-                    {
-                      "client_id": "570409833237-jp1kd2qumhglf1l9ufnk8r77emi0pnod.apps.googleusercontent.com",
-                      "client_type": 3
-                    }
-                  ]
-                }
-              }
-            }
-          ],
-          "configuration_version": "1"
+          "current_key": "AIzaSyAytdM6_662UQwbFRcT2tp0itHSnYHJg9A"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "570409833237-jp1kd2qumhglf1l9ufnk8r77emi0pnod.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
