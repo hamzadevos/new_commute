@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class DirectionsService {
-  static const _apiKey = 'AIzaSyAF6J2_-EoNbZsJsnmpOGAjST2uPj0lJ6E';
+  static const _apiKey = 'AIzaSyDey7*************m9jBKIZd7***EFM6c';
   static const String _baseUrl =
       'https://maps.googleapis.com/maps/api/directions/json';
 

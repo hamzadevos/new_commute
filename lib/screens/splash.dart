@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
 import '../resources/shared_preference.dart';
-import '../validations/login.dart';
-import 'logo.dart';
+import 'getstarted.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -44,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (introSeen && mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MainScreen()),
+        MaterialPageRoute(builder: (context) => const Starting()),
       );
     }
   }
@@ -54,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const Signin()),
+        MaterialPageRoute(builder: (context) => const Starting()),
       );
     }
   }

@@ -1,12 +1,11 @@
-import 'package:new_commute/screens/home.dart';
-import 'package:new_commute/screens/mapscreen.dart';
-import 'package:new_commute/validations/login.dart';
-import 'package:new_commute/validations/signup.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../main.dart';
+import '../validations/login.dart';
+import '../validations/signup.dart';
+import '../resources/shared_preference.dart';
 
 class Starting extends StatefulWidget {
   const Starting({super.key});
@@ -24,35 +23,43 @@ class _StartState extends State<Starting> {
   Future<void> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-
       if (googleUser == null) {
-        // User cancelled the sign-in
+        debugPrint('ℹ️ [INFO] Google sign-in cancelled');
         return;
       }
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
       UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      User? user = userCredential.user;
 
-      // Navigate to home screen after successful sign-in
-      if (userCredential.user != null) {
+      if (user != null && mounted) {
+        // Save user data to Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'firstName': googleUser.displayName?.split(' ').first ?? 'User',
+          'surname': googleUser.displayName?.split(' ').last ?? '',
+          'email': googleUser.email,
+          'createdAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        await SharedPrefHelper.setLoggedIn(true);
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MainScreen()),
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
+        debugPrint('✅ [INFO] Google sign-in successful: ${user.email}');
       }
     } catch (e) {
-      print("Google sign-in failed: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to sign in with Google'),
-        ),
-      );
+      debugPrint('❌ [ERROR] Google sign-in failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to sign in with Google')),
+        );
+      }
     }
   }
 
@@ -65,53 +72,45 @@ class _StartState extends State<Starting> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 80),
-            Text(
+            const SizedBox(height: 80),
+            const Text(
               'Let\'s Get Started',
-              style: TextStyle(fontSize: 28,
-                  fontFamily: 'Outfit',
-                  color: Color(0xff022E57), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 28,
+                fontFamily: 'Outfit',
+                color: Color(0xff022E57),
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 60),
-            Container(
-
-                child: Image.asset('assets/sn.png',fit: BoxFit.cover, width: double.infinity,),
-              ),
-
-            SizedBox(height: 70),
+            const SizedBox(height: 60),
+            Image.asset(
+              'assets/sn.png',
+              fit: BoxFit.cover,
+              width: double.infinity,
+            ),
+            const SizedBox(height: 70),
             Padding(
-              padding: const EdgeInsets.only(right: 20.0,left: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _buildSocialButton(
                 context,
                 'Continue With Google',
                 'assets/gog.png',
                 signInWithGoogle,
               ),
-
             ),
-            SizedBox(height: 15),
-            // Padding(
-            //   padding: const EdgeInsets.only(right: 20.0,left: 20),
-            //   child: _buildSocialButton(
-            //     context,
-            //     'Continue With Facebook',
-            //     'assets/fac.png',
-            //         () {},
-            //   ),
-            // ),
-            SizedBox(height: 20),
+            const SizedBox(height: 15),
             Padding(
-              padding: const EdgeInsets.only(right: 20.0,left: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildActionButton(context, 'Login', Color(0xffE20000), Signin(),Colors.white ),
-                  _buildActionButton(context, 'Sign Up', Color(0xffC4C4C9), SignUp(),Color(0xff022E57)),
+                  _buildActionButton(context, 'Login', const Color(0xffE20000), const Signin(), Colors.white),
+                  _buildActionButton(context, 'Sign Up', const Color(0xffC4C4C9), const SignUp(), const Color(0xff022E57)),
                 ],
               ),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -133,8 +132,16 @@ class _StartState extends State<Starting> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(imagePath, height: 24),
-            SizedBox(width: 10),
-            Text(title, style: TextStyle(color: Color(0xff212121), fontFamily: 'Outfit', fontSize: 20,fontWeight: FontWeight.w600)),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Color(0xff212121),
+                fontFamily: 'Outfit',
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -156,9 +163,8 @@ class _StartState extends State<Starting> {
         child: Center(
           child: Text(
             title,
-
             style: TextStyle(
-              color: textColor, // Now we can control text color
+              color: textColor,
               fontFamily: 'Outfit',
               fontSize: 22,
               fontWeight: FontWeight.w600,

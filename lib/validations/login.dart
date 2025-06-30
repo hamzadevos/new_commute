@@ -51,18 +51,34 @@ class _SigninState extends State<Signin> {
     });
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
-      await SharedPrefHelper.setLoggedIn(true);
+      User? user = userCredential.user;
+      if (user != null) {
+        // Ensure user data exists in Firestore
+        DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        if (!doc.exists) {
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+            'firstName': user.displayName?.split(' ').first ?? 'User',
+            'surname': user.displayName?.split(' ').last ?? '',
+            'email': user.email ?? _emailController.text.trim(),
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
 
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
+        await SharedPrefHelper.setLoggedIn(true);
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MainScreen()),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -167,17 +183,17 @@ class _SigninState extends State<Signin> {
                     controller: _emailController,
                     style: TextStyle(color: Colors.black, fontSize: 14 * fontScale),
                     decoration: InputDecoration(
-                      contentPadding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                       prefixIcon: Padding(
                         padding: const EdgeInsets.all(6.0),
                         child: Image.asset('assets/email.png', height: 20, width: 20),
                       ),
                       hintText: 'Email',
                       hintStyle: TextStyle(
-                          fontFamily: 'Outfit',
-                          color: const Color(0xFFBCBCBC),
-                          fontSize: 14 * fontScale),
+                        fontFamily: 'Outfit',
+                        color: const Color(0xFFBCBCBC),
+                        fontSize: 14 * fontScale,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: const BorderSide(width: 1, color: Color(0xFFBCBCBC)),
@@ -194,8 +210,7 @@ class _SigninState extends State<Signin> {
                     obscureText: _obscurePassword,
                     style: TextStyle(fontSize: 14 * fontScale),
                     decoration: InputDecoration(
-                      contentPadding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                       prefixIcon: Padding(
                         padding: const EdgeInsets.all(6.0),
                         child: Image.asset('assets/pass.png', height: 20, width: 20),
@@ -217,9 +232,10 @@ class _SigninState extends State<Signin> {
                       ),
                       hintText: 'Password',
                       hintStyle: TextStyle(
-                          fontFamily: 'Outfit',
-                          color: const Color(0xFFBCBCBC),
-                          fontSize: 14 * fontScale),
+                        fontFamily: 'Outfit',
+                        color: const Color(0xFFBCBCBC),
+                        fontSize: 14 * fontScale,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: const BorderSide(width: 1, color: Color(0xFFBCBCBC)),
@@ -231,9 +247,10 @@ class _SigninState extends State<Signin> {
                 RichText(
                   text: TextSpan(
                     style: TextStyle(
-                        fontSize: 14 * fontScale,
-                        fontFamily: 'Outfit',
-                        color: const Color(0xFFBCBCBC)),
+                      fontSize: 14 * fontScale,
+                      fontFamily: 'Outfit',
+                      color: const Color(0xFFBCBCBC),
+                    ),
                     children: [
                       const TextSpan(text: ""),
                       TextSpan(
@@ -241,12 +258,12 @@ class _SigninState extends State<Signin> {
                         style: TextStyle(
                           fontSize: 16 * fontScale,
                           fontFamily: 'Outfit',
-                          color: Color(0xffE20000),
+                          color: const Color(0xffE20000),
                           fontWeight: FontWeight.bold,
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            Navigator.pushReplacement(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                             );
@@ -261,7 +278,7 @@ class _SigninState extends State<Signin> {
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Text(
                       _errorMessage!,
-                      style: TextStyle(color: Color(0xffE20000), fontSize: 12 * fontScale),
+                      style: TextStyle(color: const Color(0xffE20000), fontSize: 12 * fontScale),
                     ),
                   ),
                 GestureDetector(
@@ -304,9 +321,10 @@ class _SigninState extends State<Signin> {
                 RichText(
                   text: TextSpan(
                     style: TextStyle(
-                        fontSize: 16 * fontScale,
-                        fontFamily: 'Outfit',
-                        color: const Color(0xFFBCBCBC)),
+                      fontSize: 16 * fontScale,
+                      fontFamily: 'Outfit',
+                      color: const Color(0xFFBCBCBC),
+                    ),
                     children: [
                       const TextSpan(text: "Don't have an account? "),
                       TextSpan(
@@ -314,12 +332,12 @@ class _SigninState extends State<Signin> {
                         style: TextStyle(
                           fontSize: 17 * fontScale,
                           fontFamily: 'Outfit',
-                          color: Color(0xffE20000),
+                          color: const Color(0xffE20000),
                           fontWeight: FontWeight.bold,
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            Navigator.pushReplacement(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(builder: (_) => const SignUp()),
                             );

@@ -11,11 +11,11 @@ class MarkerIconManager {
 
   Future<void> loadIcons(BuildContext context) async {
     try {
-      myLocationIcon = await _createBitmapDescriptor(context, Icons.my_location, Colors.redAccent, 24);
-      destinationIcon = await _createBitmapDescriptor(context, Icons.location_pin, Colors.redAccent, 24);
-      speedoIcon = await _createBitmapDescriptor(context, Icons.directions_bus, Colors.redAccent, 24);
-      metroIcon = await _createBitmapDescriptor(context, Icons.directions_bus_filled, Colors.redAccent, 24);
-      trainIcon = await _createBitmapDescriptor(context, Icons.train, Colors.redAccent, 24);
+      myLocationIcon = await _createBitmapDescriptor(context, Icons.my_location, Colors.blue, 40);
+      destinationIcon = await _createBitmapDescriptor(context, Icons.location_pin, Colors.redAccent, 40);
+      speedoIcon = await _createBitmapDescriptor(context, Icons.directions_bus, Colors.redAccent, 40);
+      metroIcon = await _createBitmapDescriptor(context, Icons.directions_bus_filled, Colors.redAccent, 40);
+      trainIcon = await _createBitmapDescriptor(context, Icons.train, Colors.redAccent, 40);
       debugPrint('All icons loaded successfully');
     } catch (e) {
       debugPrint('Error loading icons: $e');

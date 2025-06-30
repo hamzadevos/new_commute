@@ -56,22 +56,32 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
     _destinationController.addListener(_onDestinationTextChanged);
 
     _pickupFocusNode.addListener(() {
-      if (_pickupFocusNode.hasFocus) {
+      if (_pickupFocusNode.hasFocus && mounted) {
         setState(() {
           _showPickupSuggestions = _pickupSuggestions.isNotEmpty || _pickupController.text.isNotEmpty;
-          _showDestinationSuggestions = false;
+          _showDestinationSuggestions = false; // Ensure destination suggestions are hidden
         });
         debugPrint('🔍 [INFO] Pickup field focused');
+      } else {
+        setState(() {
+          _showPickupSuggestions = false; // Hide suggestions when focus is lost
+        });
+        debugPrint('🔍 [INFO] Pickup field unfocused');
       }
     });
 
     _destinationFocusNode.addListener(() {
-      if (_destinationFocusNode.hasFocus) {
+      if (_destinationFocusNode.hasFocus && mounted) {
         setState(() {
           _showDestinationSuggestions = _destinationSuggestions.isNotEmpty || _destinationController.text.isNotEmpty;
-          _showPickupSuggestions = false;
+          _showPickupSuggestions = false; // Ensure pickup suggestions are hidden
         });
         debugPrint('🔍 [INFO] Destination field focused');
+      } else {
+        setState(() {
+          _showDestinationSuggestions = false; // Hide suggestions when focus is lost
+        });
+        debugPrint('🔍 [INFO] Destination field unfocused');
       }
     });
   }
@@ -79,6 +89,8 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _pickupController.removeListener(_onPickupTextChanged);
+    _destinationController.removeListener(_onDestinationTextChanged);
     _pickupController.dispose();
     _destinationController.dispose();
     _pickupFocusNode.dispose();
@@ -120,7 +132,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
           .toList();
       setState(() {
         _pickupSuggestions = [...prefixMatches, ...containsMatches].take(10).toList();
-        _showPickupSuggestions = true;
+        _showPickupSuggestions = _pickupFocusNode.hasFocus;
       });
       debugPrint('✅ [INFO] Pickup suggestions updated: ${_pickupSuggestions.length}');
       if (_pickupSuggestions.isEmpty) {
@@ -150,7 +162,8 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
       final prefixMatches = widget.locations
           .where((loc) =>
       loc.name.toLowerCase().startsWith(query) &&
-          !loc.name.toLowerCase().contains('speedo'))
+          !loc.name.toLowerCase().contains('speedo') &&
+          !loc.name.toLowerCase().contains('orange'))
           .toList();
       final containsMatches = widget.locations
           .where((loc) =>
@@ -161,7 +174,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
           .toList();
       setState(() {
         _destinationSuggestions = [...prefixMatches, ...containsMatches].take(10).toList();
-        _showDestinationSuggestions = true;
+        _showDestinationSuggestions = _destinationFocusNode.hasFocus;
       });
       debugPrint('✅ [INFO] Destination suggestions updated: ${_destinationSuggestions.length}');
       if (_destinationSuggestions.isEmpty) {
@@ -171,11 +184,15 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   }
 
   void _selectPickup(AppLocation location) {
+    if (!mounted) return;
     setState(() {
       _pickupController.text = location.name;
       _showPickupSuggestions = false;
-      _pickupFocusNode.unfocus();
+      _showDestinationSuggestions = false; // Ensure destination suggestions are hidden
     });
+    // Unfocus the pickup field and hide the keyboard
+    _pickupFocusNode.unfocus();
+    FocusScope.of(context).unfocus();
     widget.onPickupChanged(
       LatLng(location.lat, location.lng),
       location.name,
@@ -184,11 +201,15 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   }
 
   void _selectDestination(AppLocation location) {
+    if (!mounted) return;
     setState(() {
       _destinationController.text = location.name;
       _showDestinationSuggestions = false;
-      _destinationFocusNode.unfocus();
+      _showPickupSuggestions = false; // Ensure pickup suggestions are hidden
     });
+    // Unfocus the destination field and hide the keyboard
+    _destinationFocusNode.unfocus();
+    FocusScope.of(context).unfocus();
     widget.onDestinationChanged(
       LatLng(location.lat, location.lng),
       location.name,
@@ -197,39 +218,47 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   }
 
   void _clearPickup() {
+    if (!mounted) return;
     setState(() {
       _pickupController.clear();
       _pickupSuggestions = widget.locations
           .where((loc) => !loc.name.toLowerCase().contains('speedo') && !loc.name.toLowerCase().contains('orange'))
           .take(5)
           .toList();
-      _showPickupSuggestions = _pickupFocusNode.hasFocus;
-      _pickupFocusNode.unfocus();
+      _showPickupSuggestions = false; // Hide suggestions on clear
+      _showDestinationSuggestions = false; // Ensure destination suggestions are hidden
     });
+    _pickupFocusNode.unfocus();
+    FocusScope.of(context).unfocus();
     widget.onPickupChanged(
-      widget.pickupLocation ?? const LatLng(31.5, 74.42), // Corrected default
+      widget.pickupLocation ?? const LatLng(31.5, 74.42),
       '',
     );
     debugPrint('🗑️ [INFO] Pickup cleared');
   }
 
   void _clearDestination() {
+    if (!mounted) return;
     setState(() {
       _destinationController.clear();
       _destinationSuggestions = widget.locations
           .where((loc) => !loc.name.toLowerCase().contains('speedo') && !loc.name.toLowerCase().contains('orange'))
           .take(5)
           .toList();
-      _showDestinationSuggestions = _destinationFocusNode.hasFocus;
-      _destinationFocusNode.unfocus();
+      _showDestinationSuggestions = false; // Hide suggestions on clear
+      _showPickupSuggestions = false; // Ensure pickup suggestions are hidden
     });
+    _destinationFocusNode.unfocus();
+    FocusScope.of(context).unfocus();
     widget.onDestinationChanged(null, '');
     debugPrint('🗑️ [INFO] Destination cleared');
   }
 
   Future<void> _getCurrentLocation() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
+      _showPickupSuggestions = false; // Hide suggestions during loading
     });
     try {
       final location = await widget.locationService.getCurrentLocation(context);
@@ -237,8 +266,9 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
         setState(() {
           _pickupController.text = 'My Location';
           _showPickupSuggestions = false;
-          _pickupFocusNode.unfocus();
         });
+        _pickupFocusNode.unfocus();
+        FocusScope.of(context).unfocus();
         widget.onPickupChanged(location, 'My Location');
         debugPrint('✅ [INFO] Current location set as pickup: $location');
       } else {

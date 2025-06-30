@@ -1,5 +1,6 @@
 import 'package:new_commute/screens/getstarted.dart';
 import 'package:new_commute/screens/home.dart';
+import 'package:new_commute/screens/logo.dart';
 import 'package:new_commute/screens/mapscreen.dart';
 import 'package:new_commute/screens/profile_screen.dart';
 import 'package:new_commute/services/travelmode.dart';
@@ -7,12 +8,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'firebase_options.dart';
+import '../services/app_location.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  rootBundle.loadString('assets/stations.json');
-  rootBundle.loadString('assets/locations.json');
+  await rootBundle.loadString('assets/stations.json');
+  await rootBundle.loadString('assets/locations.json');
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -45,35 +48,22 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SplashScreen();
+          return const LogoScreen();
         }
         if (snapshot.hasData) {
-          return const MainScreen();
+          // Show LogoScreen for 2 seconds before MainScreen
+          return FutureBuilder(
+            future: Future.delayed(const Duration(seconds: 2)),
+            builder: (context, futureSnapshot) {
+              if (futureSnapshot.connectionState == ConnectionState.waiting) {
+                return const LogoScreen();
+              }
+              return const MainScreen();
+            },
+          );
         }
         return const Starting();
       },
-    );
-  }
-}
-
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.redAccent,
-      body: Center(
-        child: Text(
-          'Commute Pro',
-          style: TextStyle(
-            fontFamily: 'Outfit',
-            fontSize: 32,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
     );
   }
 }
@@ -99,7 +89,7 @@ class _MainScreenState extends State<MainScreen> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      _showTravelOptions = index == 0 ;
+      _showTravelOptions = index == 0;
       debugPrint('Navigated to tab: $index');
     });
   }
@@ -112,6 +102,10 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _showTravelOptions = !_showTravelOptions;
     });
+  }
+
+  void _updateRoute(Set<Polyline> polylines, Set<Marker> markers, LatLngBounds? bounds) {
+    _mapScreenKey.currentState?.updateRoute(polylines, markers, bounds);
   }
 
   @override
@@ -130,9 +124,18 @@ class _MainScreenState extends State<MainScreen> {
                   TravelModeWidget(
                     onGetMeSomewhereTapped: _onGetMeSomewhereTapped,
                     onToggleVisibility: _toggleTravelOptions,
-                    mapScreenState: _mapScreenKey.currentState,
+                    onSeeAllRoutesTapped: () {
+                      debugPrint('See All Routes tapped');
+                      _mapScreenKey.currentState?.showNearestStationRoutes();
+                    },
+                    mapController: _mapScreenKey.currentState?.mapController,
+                    isNavigating: _mapScreenKey.currentState?.isNavigating ?? false,
+                    onUpdateRoute: _updateRoute,
+                    pickupLocation: _mapScreenKey.currentState?.pickupLocation,
+                    locations: _mapScreenKey.currentState?.locations ?? [],
+                    googleApiKey: 'YOUR_API_KEY', // Replace with valid key
                   ),
-                  const SizedBox(height: 0),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),

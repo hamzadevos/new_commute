@@ -64,13 +64,11 @@ class _MapWidgetState extends State<MapWidget> {
   }
 
   void _updateMarkersAndLocations() {
-    final currentStationType = _getStationType();
-    if (_lastStationType != currentStationType ||
-        widget.pickupLocation != null ||
-        widget.destinationLocation != null ||
-        widget.routeMarkers.isNotEmpty) {
-      _markers = {...widget.routeMarkers};
+    final newMarkers = <Marker>{};
+    newMarkers.addAll(widget.routeMarkers);
 
+    final currentStationType = _getStationType();
+    if (_lastStationType != currentStationType || widget.routeMarkers.isNotEmpty) {
       if (widget.stationMode >= 2) {
         final stationsToShow = widget.locations
             .whereType<Station>()
@@ -78,7 +76,7 @@ class _MapWidgetState extends State<MapWidget> {
             .take(50)
             .toList();
 
-        _markers.addAll(stationsToShow.map((station) {
+        final markers = stationsToShow.map((station) {
           final icon = station.type == 'SpeedoBus'
               ? widget.iconManager.speedoIcon
               : station.type == 'MetroBus'
@@ -88,16 +86,42 @@ class _MapWidgetState extends State<MapWidget> {
             markerId: MarkerId(station.id),
             position: LatLng(station.lat, station.lng),
             infoWindow: InfoWindow(title: station.name),
-            icon: icon ?? BitmapDescriptor.defaultMarker,
+            icon: icon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
           );
-        }));
-        debugPrint('Added ${stationsToShow.length} station markers for type: $currentStationType');
-      }
+        }).toSet();
 
+        newMarkers.addAll(markers);
+        debugPrint('Added ${markers.length} station markers for type: $currentStationType');
+      }
       _lastStationType = currentStationType;
     }
 
-    _visibleLocations = _getVisibleLocations();
+    if (widget.pickupLocation != null) {
+      newMarkers.add(
+        Marker(
+          markerId: const MarkerId('pickup'),
+          position: widget.pickupLocation!,
+          infoWindow: const InfoWindow(title: 'Pickup'),
+          icon: widget.iconManager.myLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        ),
+      );
+    }
+
+    if (widget.destinationLocation != null) {
+      newMarkers.add(
+        Marker(
+          markerId: const MarkerId('destination'),
+          position: widget.destinationLocation!,
+          infoWindow: const InfoWindow(title: 'Destination'),
+          icon: widget.iconManager.destinationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        ),
+      );
+    }
+
+    setState(() {
+      _markers = newMarkers;
+      _visibleLocations = _getVisibleLocations();
+    });
   }
 
   String _getStationType() {
@@ -146,15 +170,19 @@ class _MapWidgetState extends State<MapWidget> {
         if (point.longitude > east) east = point.longitude;
       }
 
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLngBounds(
-          LatLngBounds(
-            southwest: LatLng(south, west),
-            northeast: LatLng(north, east),
-          ),
-          50,
-        ),
-      );
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted && _mapController != null) {
+          _mapController!.animateCamera(
+            CameraUpdate.newLatLngBounds(
+              LatLngBounds(
+                southwest: LatLng(south, west),
+                northeast: LatLng(north, east),
+              ),
+              50,
+            ),
+          );
+        }
+      });
     }
   }
 

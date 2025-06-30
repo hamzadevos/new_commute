@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
-import '../resources/shared_preference.dart';
-import '../validations/login.dart';
-import 'getstarted.dart';
-
+import 'package:new_commute/resources/shared_preference.dart';
+import 'package:new_commute/screens/getstarted.dart';
+import 'package:new_commute/screens/splash.dart';
 
 class LogoScreen extends StatefulWidget {
   const LogoScreen({super.key});
@@ -21,12 +19,12 @@ class _LogoScreenState extends State<LogoScreen> {
 
   Future<void> _navigateAfterDelay() async {
     await Future.delayed(const Duration(seconds: 2));
-    bool isLoggedIn = await SharedPrefHelper.isLoggedIn();
     if (mounted) {
+      bool isIntroSeen = await SharedPrefHelper.isIntroSeen();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => isLoggedIn ? const MainScreen() : const Starting(),
+          builder: (context) => isIntroSeen ? const Starting() : const SplashScreen(),
         ),
       );
     }
